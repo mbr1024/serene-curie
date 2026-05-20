@@ -1,0 +1,182 @@
+/* ----------------------------------------------------
+   智能生产物料管理系统 - 全局高级设计系统
+   设计理念: Premium Dark Obsidian with Glassmorphism & Cyber Glow
+   ---------------------------------------------------- */
+
+:root {
+  /* 基础色彩系统 */
+  --bg-obsidian: #08090c;
+  --bg-card: rgba(18, 22, 33, 0.7);
+  --bg-card-hover: rgba(26, 32, 48, 0.85);
+  --bg-modal: rgba(13, 17, 24, 0.95);
+  
+  --border-glow: rgba(255, 255, 255, 0.04);
+  --border-glow-hover: rgba(255, 255, 255, 0.08);
+
+  --text-primary: #f3f4f6;
+  --text-secondary: #9ca3af;
+  --text-muted: #6b7280;
+
+  /* 霓虹色系统 (三大原料与产品色彩规范) */
+  --color-cyan: #00f2fe;
+  --color-cyan-glow: rgba(0, 242, 254, 0.15);
+  
+  --color-green: #39ff14;
+  --color-green-glow: rgba(57, 255, 20, 0.15);
+
+  --color-orange: #ff7b00;
+  --color-orange-glow: rgba(255, 123, 0, 0.15);
+
+  --color-gold: #d4af37;
+  --color-gold-glow: rgba(212, 175, 55, 0.15);
+
+  --color-danger: #ff2e2e;
+  --color-danger-glow: rgba(255, 46, 46, 0.25);
+  
+  --color-success: #10b981;
+
+  /* 字体族 */
+  --font-primary: 'Plus Jakarta Sans', 'Noto Sans SC', -apple-system, sans-serif;
+  
+  /* 阴影效果 */
+  --shadow-premium: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  --shadow-neon-cyan: 0 0 20px rgba(0, 242, 254, 0.15);
+  --shadow-neon-green: 0 0 20px rgba(57, 255, 20, 0.15);
+  --shadow-neon-orange: 0 0 20px rgba(255, 123, 0, 0.15);
+
+  /* 主题可变设计系统属性 */
+  --brand-gradient: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
+  --text-active-btn: #000000;
+  --bg-input: rgba(0, 0, 0, 0.3);
+  --border-input: rgba(255, 255, 255, 0.08);
+  --shadow-active-btn: 0 4px 16px rgba(255, 255, 255, 0.2);
+  --bg-action-card: linear-gradient(135deg, rgba(24, 29, 43, 0.8) 0%, rgba(14, 18, 28, 0.8) 100%);
+  --bg-gradient-radial: 
+    radial-gradient(circle at 10% 20%, rgba(0, 242, 254, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 90% 80%, rgba(255, 123, 0, 0.03) 0%, transparent 40%),
+    radial-gradient(circle at 50% 50%, rgba(57, 255, 20, 0.015) 0%, transparent 60%);
+  --bg-inner-panel: rgba(0, 0, 0, 0.2);
+  --bg-inner-panel-hover: rgba(0, 0, 0, 0.35);
+  --bg-inner-panel-subtle: rgba(0, 0, 0, 0.15);
+  --bg-inner-panel-subtle-hover: rgba(255, 255, 255, 0.02);
+  --bg-btn-hover: rgba(255, 255, 255, 0.03);
+  --bg-hover-subtle: rgba(255, 255, 255, 0.04);
+}
+
+
+
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  user-select: none;
+}
+
+body {
+  background-color: var(--bg-obsidian);
+  color: var(--text-primary);
+  font-family: var(--font-primary);
+  min-height: 100vh;
+  overflow-x: hidden;
+  position: relative;
+  background-image: var(--bg-gradient-radial);
+  background-attachment: fixed;
+}
+
+/* 完美自定义滚动条 */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-obsidian);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* 应用程序根布局 */
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 渐变与流光动画 */
+@keyframes flow-border {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulse-cyan {
+  0%, 100% { box-shadow: 0 0 10px rgba(0, 242, 254, 0.1); }
+  50% { box-shadow: 0 0 25px rgba(0, 242, 254, 0.35); }
+}
+
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 10px rgba(57, 255, 20, 0.1); }
+  50% { box-shadow: 0 0 25px rgba(57, 255, 20, 0.35); }
+}
+
+@keyframes pulse-orange {
+  0%, 100% { box-shadow: 0 0 10px rgba(255, 123, 0, 0.1); }
+  50% { box-shadow: 0 0 25px rgba(255, 123, 0, 0.35); }
+}
+
+@keyframes pulse-red {
+  0%, 100% { 
+    box-shadow: 0 0 10px rgba(255, 46, 46, 0.15); 
+    border-color: rgba(255, 46, 46, 0.2);
+  }
+  50% { 
+    box-shadow: 0 0 25px rgba(255, 46, 46, 0.55); 
+    border-color: rgba(255, 46, 46, 0.6);
+    background: rgba(255, 46, 46, 0.05);
+  }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+/* 按钮点击触感反馈 */
+.btn-pressable {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.btn-pressable:active {
+  transform: scale(0.96);
+}
+
+/* 输入框微光动效 */
+input, select, textarea {
+  outline: none;
+  font-family: var(--font-primary);
+  transition: all 0.25s ease;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--color-cyan) !important;
+  box-shadow: 0 0 12px rgba(0, 242, 254, 0.2) !important;
+}
+
+/* 隐藏部分输入框默认增减箭头 */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
