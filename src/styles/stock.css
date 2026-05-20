@@ -1,0 +1,236 @@
+/* ----------------------------------------------------
+   实时余量看板 (Battery Progress Grid)
+   ---------------------------------------------------- */
+.section-title {
+  font-size: 18px;
+  font-weight: 800;
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary);
+  border-left: 4px solid var(--color-cyan);
+  padding-left: 10px;
+}
+
+.section-title.orange { border-color: var(--color-orange); }
+.section-title.green { border-color: var(--color-green); }
+
+.grid-stock {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  margin-bottom: 40px;
+}
+
+/* 霓虹电池物料卡片 */
+.stock-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: 20px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.stock-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-glow-hover);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-premium);
+}
+
+/* 自定义霓虹高光 */
+.stock-card.glow-cyan:hover { box-shadow: var(--shadow-neon-cyan); border-color: rgba(0, 242, 254, 0.3); }
+.stock-card.glow-green:hover { box-shadow: var(--shadow-neon-green); border-color: rgba(57, 255, 20, 0.3); }
+.stock-card.glow-orange:hover { box-shadow: var(--shadow-neon-orange); border-color: rgba(255, 123, 0, 0.3); }
+.stock-card.glow-gold:hover { box-shadow: var(--shadow-neon-orange); border-color: rgba(212, 175, 55, 0.3); }
+
+/* 低库存报警呼吸灯效果 */
+.stock-card.low-stock-alert {
+  animation: pulse-red 2s infinite;
+}
+
+.card-header-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.card-badge {
+  font-size: 10px;
+  font-weight: 800;
+  padding: 4px 8px;
+  border-radius: 8px;
+  text-transform: uppercase;
+}
+
+.card-badge.cyan { background: var(--color-cyan-glow); color: var(--color-cyan); }
+.card-badge.green { background: var(--color-green-glow); color: var(--color-green); }
+.card-badge.orange { background: var(--color-orange-glow); color: var(--color-orange); }
+.card-badge.gold { background: var(--color-gold-glow); color: var(--color-gold); }
+.card-badge.red { background: var(--color-danger-glow); color: var(--color-danger); }
+
+.stock-value-wrapper {
+  margin: 16px 0;
+}
+
+.stock-num {
+  font-size: 36px;
+  font-weight: 800;
+  font-family: monospace;
+}
+
+.stock-unit {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-left: 4px;
+}
+
+/* 拟物化电池槽 */
+.battery-slot {
+  height: 14px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5);
+  margin-bottom: 12px;
+}
+
+.battery-fill {
+  height: 100%;
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.1, 0.8, 0.3, 1);
+}
+
+.battery-fill.cyan { background: linear-gradient(90deg, #00c6ff, var(--color-cyan)); }
+.battery-fill.green { background: linear-gradient(90deg, #11998e, var(--color-green)); }
+.battery-fill.orange { background: linear-gradient(90deg, #f857a6, var(--color-orange)); }
+.battery-fill.gold { background: linear-gradient(90deg, #f12711, var(--color-gold)); }
+.battery-fill.red { background: linear-gradient(90deg, #e65c00, var(--color-danger)); }
+
+.card-footer-stock {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+.stock-days-badge {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+/* 合并健康行：日均耗 + 状态提示 */
+.card-health-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.health-sub-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.health-alert-inline {
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 2px 7px;
+}
+
+.health-alert-inline.red {
+  color: var(--color-danger);
+  background: var(--color-danger-glow);
+}
+
+.health-alert-inline.green {
+  color: var(--color-success);
+  background: rgba(16, 185, 129, 0.12);
+}
+
+.health-alert-inline.muted {
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Kanban Board Archived States */
+.stock-card.archived-card {
+  opacity: 0.65;
+  filter: grayscale(0.3);
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+}
+
+.stock-card.archived-card:hover {
+  opacity: 0.9;
+  filter: grayscale(0);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.archived-accordion-wrapper {
+  margin: 40px 0 20px 0;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+}
+
+.archived-accordion-wrapper:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+}
+
+.accordion-trigger {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.02);
+  border: none;
+  color: var(--text-secondary);
+  padding: 18px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.accordion-trigger:hover {
+  background: var(--bg-hover-subtle);
+  color: var(--text-primary);
+}
+
+.accordion-content {
+  padding: 28px;
+  border-top: 1px solid var(--border-glow);
+  background: var(--bg-inner-panel-subtle);
+}
+
+.accordion-arrow {
+  font-size: 12px;
+  color: var(--text-muted);
+  transition: transform 0.2s ease;
+}
+

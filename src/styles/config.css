@@ -1,0 +1,169 @@
+/* ----------------------------------------------------
+   物料定义页面 (Materials & Products Config)
+   ---------------------------------------------------- */
+.config-layout {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 32px;
+  width: min(100%, 1760px);
+  align-self: center;
+}
+
+.config-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-glow);
+  border-radius: 24px;
+  padding: 32px;
+  min-width: 0;
+}
+
+.config-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.config-btn-add {
+  background: var(--text-primary);
+  color: var(--text-active-btn);
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.config-item-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: clamp(480px, calc(100vh - 300px), 760px);
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.config-card {
+  background: var(--bg-inner-panel);
+  border: 1px solid var(--border-glow);
+  padding: 16px 20px;
+  border-radius: 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.2s ease;
+}
+
+.config-card:hover {
+  background: var(--bg-inner-panel-hover);
+  border-color: var(--border-glow-hover);
+}
+
+.config-info {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.config-color-indicator {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 8px currentColor;
+}
+
+.config-text h4 {
+  font-size: 15px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.config-text p {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.config-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.config-btn-action {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  color: var(--text-secondary);
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.config-btn-action:hover {
+  background: rgba(255, 46, 46, 0.1);
+  color: var(--color-danger);
+  border-color: rgba(255, 46, 46, 0.2);
+}
+
+/* ====================================================
+   Archived / Disabled Premium UI Styling
+   ==================================================== */
+
+.config-card.archived {
+  opacity: 0.6;
+  filter: grayscale(0.4);
+  border: 1px dashed var(--border-glow-hover);
+  background: var(--bg-inner-panel-subtle);
+  transition: all 0.25s ease;
+}
+
+.config-card.archived:hover {
+  opacity: 0.85;
+  filter: grayscale(0);
+  background: var(--bg-inner-panel-subtle-hover);
+  border-color: var(--border-glow-hover);
+}
+
+.archive-tag {
+  font-size: 10px;
+  border: 1px solid var(--border-glow-hover);
+  color: var(--text-secondary);
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 8px;
+  vertical-align: middle;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.config-btn-action.reactivate {
+  color: var(--color-cyan);
+}
+
+.config-btn-action.reactivate:hover {
+  background: rgba(0, 242, 254, 0.1) !important;
+  color: var(--color-cyan) !important;
+  border-color: rgba(0, 242, 254, 0.25) !important;
+  box-shadow: var(--shadow-neon-cyan);
+}
+
+.config-btn-action.delete {
+  color: var(--color-danger);
+}
+
+.config-btn-action.delete:hover {
+  background: rgba(255, 46, 46, 0.1);
+  color: var(--color-danger);
+  border-color: rgba(255, 46, 46, 0.25);
+}
+

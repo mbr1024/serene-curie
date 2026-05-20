@@ -1,0 +1,97 @@
+/* ----------------------------------------------------
+   ⚡ 快捷登记面板 (POS Actions Panel)
+   ---------------------------------------------------- */
+.actions-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 0;
+}
+
+.actions-banner {
+  text-align: center;
+  margin-bottom: 40px;
+}
+
+.actions-banner h2 {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 8px;
+}
+
+.actions-banner p {
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.action-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(200px, 1fr));
+  gap: 24px;
+  width: 100%;
+  max-width: 1300px;
+  justify-content: center;
+}
+
+/* 巨型触感拟物按钮 */
+.action-big-card {
+  background: var(--bg-action-card);
+  border: 1px solid var(--border-glow);
+  border-radius: 28px;
+  padding: 40px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.action-big-card:hover {
+  transform: translateY(-8px);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.action-big-card.action-production:hover { box-shadow: 0 15px 40px rgba(0, 242, 254, 0.2), var(--shadow-neon-cyan); border-color: rgba(0, 242, 254, 0.4); }
+.action-big-card.action-yield:hover { box-shadow: 0 15px 40px rgba(0, 242, 254, 0.2), var(--shadow-neon-cyan); border-color: rgba(0, 242, 254, 0.4); }
+.action-big-card.action-shipment:hover { box-shadow: 0 15px 40px rgba(255, 123, 0, 0.2), var(--shadow-neon-orange); border-color: rgba(255, 123, 0, 0.4); }
+.action-big-card.action-restock:hover { box-shadow: 0 15px 40px rgba(57, 255, 20, 0.2), var(--shadow-neon-green); border-color: rgba(57, 255, 20, 0.4); }
+
+.action-icon {
+  font-size: 56px;
+  margin-bottom: 24px;
+  background: rgba(255, 255, 255, 0.02);
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.3s ease;
+}
+
+.action-big-card.action-production .action-icon { color: var(--color-cyan); text-shadow: 0 0 15px var(--color-cyan); }
+.action-big-card.action-yield .action-icon { color: var(--color-cyan); text-shadow: 0 0 15px var(--color-cyan); }
+.action-big-card.action-shipment .action-icon { color: var(--color-orange); text-shadow: 0 0 15px var(--color-orange); }
+.action-big-card.action-restock .action-icon { color: var(--color-green); text-shadow: 0 0 15px var(--color-green); }
+
+.action-big-card:hover .action-icon {
+  transform: scale(1.1) rotate(5deg);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.action-name {
+  font-size: 20px;
+  font-weight: 800;
+  margin-bottom: 12px;
+}
+
+.action-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+

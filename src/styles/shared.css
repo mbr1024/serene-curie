@@ -1,0 +1,275 @@
+/* 空列表指示 */
+.empty-placeholder {
+  text-align: center;
+  padding: 48px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  opacity: 0.3;
+}
+
+/* ----------------------------------------------------
+   🔔 智能气泡通知系统 (Toast Notifications)
+   ---------------------------------------------------- */
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  z-index: 2000;
+}
+
+.toast {
+  background: var(--bg-modal);
+  border: 1px solid var(--border-glow);
+  border-left: 4px solid var(--color-cyan);
+  border-radius: 12px;
+  padding: 16px 24px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-premium);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  animation: toast-enter 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 280px;
+  max-width: 400px;
+}
+
+.toast.toast-error {
+  border-left-color: var(--color-danger);
+}
+
+.toast.toast-success {
+  border-left-color: var(--color-success);
+}
+
+@keyframes toast-enter {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+/* ====================================================
+   生产统计大盘时间周期药丸选择器
+   ==================================================== */
+.range-selector-container {
+  display: flex;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 4px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+  gap: 4px;
+}
+
+.analytics-toolbar-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 40px;
+  margin-bottom: 16px;
+}
+
+.analytics-toolbar-row .section-title {
+  margin-bottom: 0;
+  flex: 0 0 auto;
+}
+
+.stats-range-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.range-selector-btn {
+  min-height: 38px;
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.range-selector-btn:hover {
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.range-selector-btn.active {
+  color: #ffffff;
+  background: rgba(0, 242, 254, 0.12);
+  border: 1px solid rgba(0, 242, 254, 0.25);
+  box-shadow: var(--shadow-neon-cyan);
+  text-shadow: 0 0 8px rgba(0, 242, 254, 0.5);
+}
+
+/* 自定义日期区间选择面板 */
+.custom-date-picker-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(0, 242, 254, 0.16);
+  padding: 6px 12px;
+  border-radius: 14px;
+  backdrop-filter: blur(10px);
+  box-shadow: inset 0 1px 3px rgba(255, 255, 255, 0.02), 0 4px 12px rgba(0, 0, 0, 0.3);
+  white-space: nowrap;
+  width: max-content;
+  max-width: 100%;
+}
+
+.custom-date-label {
+  font-size: 12px;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex: 0 0 auto;
+}
+
+.custom-date-input {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 9px;
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  padding: 7px 10px;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+  flex: 0 0 148px;
+  width: 148px;
+  min-width: 148px;
+}
+
+.custom-date-input:focus {
+  color: #00f2fe;
+  background: rgba(0, 242, 254, 0.08);
+  border-color: rgba(0, 242, 254, 0.32);
+}
+
+.custom-date-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.9) sepia(1) saturate(5) hue-rotate(140deg);
+  cursor: pointer;
+  opacity: 0.75;
+}
+
+.custom-date-sep {
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 760px) {
+  .ledger-item {
+    flex-direction: column;
+  }
+
+  .ledger-meta {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+  }
+
+  .ledger-header .stats-range-toolbar {
+    justify-content: flex-start;
+  }
+}
+
+@keyframes fadeInSelector {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 实时余量预警状态条 */
+.warning-stat-badge {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-danger);
+  background: rgba(255, 46, 46, 0.08);
+  border: 1px solid rgba(255, 46, 46, 0.25);
+  padding: 6px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(255, 46, 46, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  animation: badge-breathing-red 2.5s ease-in-out infinite;
+}
+
+.warning-stat-badge strong {
+  color: var(--color-danger);
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 2px;
+}
+
+.success-stat-badge {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--color-success);
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  padding: 6px 16px;
+  border-radius: 20px;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.1), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  animation: badge-breathing-green 2.5s ease-in-out infinite;
+}
+
+@keyframes badge-breathing-red {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(255, 46, 46, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 46, 46, 0.2);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(255, 46, 46, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 46, 46, 0.45);
+  }
+}
+
+@keyframes badge-breathing-green {
+  0%, 100% {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.08), inset 0 1px 1px rgba(255, 255, 255, 0.03);
+    border-color: rgba(16, 185, 129, 0.2);
+  }
+  50% {
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.06);
+    border-color: rgba(16, 185, 129, 0.45);
+  }
+}
+
+
+
+
