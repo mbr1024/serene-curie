@@ -1,6 +1,6 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "smart-factory",
+  "productName": "SmartFactory",
   "version": "0.1.0",
   "identifier": "com.serenecurie.smartfactory",
   "build": {
@@ -35,6 +35,14 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
+    "windows": {
+      "nsis": {
+        "installMode": "perMachine",
+        "languages": ["SimpChinese"],
+        "displayLanguageSelector": false,
+        "installerHooks": "installer_hooks.nsh"
+      }
+    },
     "android": {
       "debugApplicationIdSuffix": ".debug"
     }

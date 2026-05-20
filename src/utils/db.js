@@ -5,16 +5,16 @@
 
 // 默认的高保真初始演示数据
 const INITIAL_MATERIALS = [
-  { id: "mat_nr", name: "天然橡胶 (NR)", stock: 500, unit: "kg", minStock: 150, color: "cyan", isBuiltIn: true },
-  { id: "mat_sbr", name: "丁苯橡胶 (SBR)", stock: 300, unit: "kg", minStock: 100, color: "cyan", isBuiltIn: true },
-  { id: "mat_br", name: "顺丁橡胶 (BR)", stock: 250, unit: "kg", minStock: 100, color: "cyan", isBuiltIn: true },
-  { id: "mat_cb", name: "高活性炭黑 N330", stock: 400, unit: "kg", minStock: 80, color: "orange", isBuiltIn: true },
-  { id: "mat_silica", name: "沉淀法白炭黑 (Silica)", stock: 90, unit: "kg", minStock: 100, color: "green", isBuiltIn: true },
-  { id: "mat_cz", name: "促进剂 CZ (防焦型)", stock: 15, unit: "kg", minStock: 20, color: "gold", isBuiltIn: true },
-  { id: "mat_dm", name: "促进剂 DM", stock: 25, unit: "kg", minStock: 20, color: "gold", isBuiltIn: true },
-  { id: "mat_zno", name: "活性剂 氧化锌 (ZnO)", stock: 60, unit: "kg", minStock: 30, color: "green", isBuiltIn: true },
-  { id: "mat_4010", name: "防老剂 4010NA", stock: 12, unit: "kg", minStock: 15, color: "green", isBuiltIn: true },
-  { id: "mat_sulfur", name: "不溶性硫磺粉 (S-80)", stock: 35, unit: "kg", minStock: 15, color: "red", isBuiltIn: true }
+  { id: "mat_nr", name: "天然橡胶 (NR)", stock: 0, unit: "kg", minStock: 150, color: "cyan", isBuiltIn: true },
+  { id: "mat_sbr", name: "丁苯橡胶 (SBR)", stock: 0, unit: "kg", minStock: 100, color: "cyan", isBuiltIn: true },
+  { id: "mat_br", name: "顺丁橡胶 (BR)", stock: 0, unit: "kg", minStock: 100, color: "cyan", isBuiltIn: true },
+  { id: "mat_cb", name: "高活性炭黑 N330", stock: 0, unit: "kg", minStock: 80, color: "orange", isBuiltIn: true },
+  { id: "mat_silica", name: "沉淀法白炭黑 (Silica)", stock: 0, unit: "kg", minStock: 100, color: "green", isBuiltIn: true },
+  { id: "mat_cz", name: "促进剂 CZ (防焦型)", stock: 0, unit: "kg", minStock: 20, color: "gold", isBuiltIn: true },
+  { id: "mat_dm", name: "促进剂 DM", stock: 0, unit: "kg", minStock: 20, color: "gold", isBuiltIn: true },
+  { id: "mat_zno", name: "活性剂 氧化锌 (ZnO)", stock: 0, unit: "kg", minStock: 30, color: "green", isBuiltIn: true },
+  { id: "mat_4010", name: "防老剂 4010NA", stock: 0, unit: "kg", minStock: 15, color: "green", isBuiltIn: true },
+  { id: "mat_sulfur", name: "不溶性硫磺粉 (S-80)", stock: 0, unit: "kg", minStock: 15, color: "red", isBuiltIn: true }
 ];
 
 const INITIAL_PRODUCTS = [];
