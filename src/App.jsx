@@ -3,6 +3,7 @@ import "./App.css";
 import {
   getStoredData,
   restockMaterial,
+  batchRestockMaterials,
   shipProduct,
   registerProductionBatch,
   undoLog,
@@ -159,7 +160,7 @@ export default function App() {
   // ----------------------------------------------------
   // 表单状态声明
   // ----------------------------------------------------
-  const [formRestock, setFormRestock] = useState({ materialId: "", qty: "", notes: "" });
+  const [formRestock, setFormRestock] = useState({ items: [], notes: "" });
   const [formShipment, setFormShipment] = useState({ productId: "", qty: "", notes: "" });
   const [formProduction, setFormProduction] = useState({ productId: "", qty: "", notes: "" });
   const [prodConsumptions, setProdConsumptions] = useState({}); // { [materialId]: qtyString }
@@ -344,17 +345,20 @@ export default function App() {
   // 1. 原料补充提交
   const handleRestockSubmit = (e) => {
     e.preventDefault();
-    if (!formRestock.materialId || !formRestock.qty || parseFloat(formRestock.qty) <= 0) {
-      showToast("请填写完整的补充数量", "error");
+    const validItems = formRestock.items.filter((item) => item.qty && parseFloat(item.qty) > 0);
+    if (validItems.length === 0) {
+      showToast("请至少填写一种原材料的补货数量", "error");
       return;
     }
     
-    const res = restockMaterial(formRestock.materialId, formRestock.qty, "管理员", formRestock.notes);
+    const res = validItems.length === 1
+      ? restockMaterial(validItems[0].materialId, validItems[0].qty, "管理员", formRestock.notes)
+      : batchRestockMaterials(validItems, "管理员", formRestock.notes);
     if (res.success) {
       setMaterials(res.materials);
       setLogs(res.logs);
       setShowRestockModal(false);
-      setFormRestock({ materialId: "", qty: "", notes: "" });
+      setFormRestock({ items: [], notes: "" });
       showToast("原料库存补给成功！");
     } else {
       showToast(res.message, "error");
@@ -1229,7 +1233,10 @@ export default function App() {
               if (activeMats.length === 0) {
                 showToast("没有可用的活跃原材料，请先到配置页启用或添加！", "error");
               } else {
-                setFormRestock({ materialId: activeMats[0].id, qty: "", notes: "" });
+                setFormRestock({
+                  items: activeMats.map((m) => ({ materialId: m.id, qty: "" })),
+                  notes: ""
+                });
                 setShowRestockModal(true);
               }
             }}>
@@ -1539,33 +1546,47 @@ export default function App() {
             
             <div className="modal-body">
               <div className="modal-group">
-                <label>选择补货原材料:</label>
-                <select
-                  className="modal-input"
-                  value={formRestock.materialId}
-                  onChange={(e) => setFormRestock({ ...formRestock, materialId: e.target.value })}
-                >
-                  {materials.filter(m => !m.archived).map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name} (当前库存: {m.stock} {m.unit})
-                    </option>
-                  ))}
-                </select>
-              </div>
+                <label>批量补货明细:</label>
+                <div style={{ display: "grid", gap: "10px", maxHeight: "320px", overflowY: "auto" }}>
+                  {formRestock.items.map((item) => {
+                    const material = materials.find((m) => m.id === item.materialId);
+                    if (!material) return null;
 
-              <div className="modal-group">
-                <label>实际补货数量:</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  className="modal-input"
-                  placeholder="请输入补充入库的数量"
-                  value={formRestock.qty}
-                  onChange={(e) => setFormRestock({ ...formRestock, qty: e.target.value })}
-                  required
-                  onInvalid={(e) => e.target.setCustomValidity("请填写实际补货数量")}
-                  onInput={(e) => e.target.setCustomValidity("")}
-                />
+                    return (
+                      <div
+                        key={item.materialId}
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: "minmax(0, 1fr) 160px",
+                          gap: "12px",
+                          alignItems: "center"
+                        }}
+                      >
+                        <div>
+                          <div style={{ fontWeight: 700 }}>{material.name}</div>
+                          <div style={{ fontSize: "12px", color: "var(--text-secondary)" }}>
+                            当前库存: {material.stock} {material.unit}
+                          </div>
+                        </div>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          className="modal-input"
+                          placeholder={`补货数量 (${material.unit})`}
+                          value={item.qty}
+                          onChange={(e) => setFormRestock((prev) => ({
+                            ...prev,
+                            items: prev.items.map((current) => current.materialId === item.materialId
+                              ? { ...current, qty: e.target.value }
+                              : current)
+                          }))}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="modal-tip">只填写需要补货的原料数量，留空的原料本次不会入库。</div>
               </div>
 
               <div className="modal-group">

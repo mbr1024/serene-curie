@@ -95,6 +95,52 @@ export const restockMaterial = (materialId, qty, operator, notes) => {
   return { success: true, materials, products, logs };
 };
 
+export const batchRestockMaterials = (items, operator, notes) => {
+  const { materials, products, logs } = getStoredData();
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return { success: false, message: "请至少填写一种原材料的补货数量" };
+  }
+
+  const normalizedItems = items
+    .map((item) => ({
+      materialId: item.materialId,
+      qty: parseFloat(item.qty)
+    }))
+    .filter((item) => item.materialId && !Number.isNaN(item.qty) && item.qty > 0);
+
+  if (normalizedItems.length === 0) {
+    return { success: false, message: "请至少填写一种原材料的补货数量" };
+  }
+
+  for (const item of normalizedItems) {
+    const matIndex = materials.findIndex((material) => material.id === item.materialId);
+    if (matIndex === -1) {
+      return { success: false, message: "存在未找到的原材料，无法完成批量补货" };
+    }
+  }
+
+  const timestamp = Date.now();
+  normalizedItems.forEach((item, index) => {
+    const matIndex = materials.findIndex((material) => material.id === item.materialId);
+    materials[matIndex].stock = roundToTwo(materials[matIndex].stock + item.qty);
+
+    logs.unshift({
+      id: `log_${timestamp}_${index}_${item.materialId}`,
+      type: "restock",
+      date: new Date().toISOString().split("T")[0],
+      title: "原料补货",
+      itemName: materials[matIndex].name,
+      qty: item.qty,
+      operator: operator || "系统",
+      notes: notes || ""
+    });
+  });
+
+  saveData(materials, products, logs);
+  return { success: true, materials, products, logs };
+};
+
 /**
  * 2. 产品出货发单
  */
