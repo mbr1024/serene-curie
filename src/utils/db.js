@@ -5,16 +5,16 @@
 
 // 默认的高保真初始演示数据
 const INITIAL_MATERIALS = [
-  { id: "mat_nr", name: "天然橡胶 (NR)", stock: 0, unit: "kg", minStock: 150, color: "cyan", isBuiltIn: true },
-  { id: "mat_sbr", name: "丁苯橡胶 (SBR)", stock: 0, unit: "kg", minStock: 100, color: "cyan", isBuiltIn: true },
-  { id: "mat_br", name: "顺丁橡胶 (BR)", stock: 0, unit: "kg", minStock: 100, color: "cyan", isBuiltIn: true },
-  { id: "mat_cb", name: "高活性炭黑 N330", stock: 0, unit: "kg", minStock: 80, color: "orange", isBuiltIn: true },
-  { id: "mat_silica", name: "沉淀法白炭黑 (Silica)", stock: 0, unit: "kg", minStock: 100, color: "green", isBuiltIn: true },
-  { id: "mat_cz", name: "促进剂 CZ (防焦型)", stock: 0, unit: "kg", minStock: 20, color: "gold", isBuiltIn: true },
-  { id: "mat_dm", name: "促进剂 DM", stock: 0, unit: "kg", minStock: 20, color: "gold", isBuiltIn: true },
-  { id: "mat_zno", name: "活性剂 氧化锌 (ZnO)", stock: 0, unit: "kg", minStock: 30, color: "green", isBuiltIn: true },
-  { id: "mat_4010", name: "防老剂 4010NA", stock: 0, unit: "kg", minStock: 15, color: "green", isBuiltIn: true },
-  { id: "mat_sulfur", name: "不溶性硫磺粉 (S-80)", stock: 0, unit: "kg", minStock: 15, color: "red", isBuiltIn: true }
+  { id: "mat_nr", name: "天然橡胶 (NR)", stock: 0, unit: "kg", minStock: 150, isBuiltIn: true },
+  { id: "mat_sbr", name: "丁苯橡胶 (SBR)", stock: 0, unit: "kg", minStock: 100, isBuiltIn: true },
+  { id: "mat_br", name: "顺丁橡胶 (BR)", stock: 0, unit: "kg", minStock: 100, isBuiltIn: true },
+  { id: "mat_cb", name: "高活性炭黑 N330", stock: 0, unit: "kg", minStock: 80, isBuiltIn: true },
+  { id: "mat_silica", name: "沉淀法白炭黑 (Silica)", stock: 0, unit: "kg", minStock: 100, isBuiltIn: true },
+  { id: "mat_cz", name: "促进剂 CZ (防焦型)", stock: 0, unit: "kg", minStock: 20, isBuiltIn: true },
+  { id: "mat_dm", name: "促进剂 DM", stock: 0, unit: "kg", minStock: 20, isBuiltIn: true },
+  { id: "mat_zno", name: "活性剂 氧化锌 (ZnO)", stock: 0, unit: "kg", minStock: 30, isBuiltIn: true },
+  { id: "mat_4010", name: "防老剂 4010NA", stock: 0, unit: "kg", minStock: 15, isBuiltIn: true },
+  { id: "mat_sulfur", name: "不溶性硫磺粉 (S-80)", stock: 0, unit: "kg", minStock: 15, isBuiltIn: true }
 ];
 
 const INITIAL_PRODUCTS = [];
@@ -321,7 +321,7 @@ export const undoLog = (logId) => {
 // 物料配置 CRUD (原材料 / 产成品)
 // ----------------------------------------------------
 
-export const addMaterial = (name, unit, minStock, color) => {
+export const addMaterial = (name, unit, minStock) => {
   const { materials, products, logs } = getStoredData();
   
   if (materials.some(item => item.name === name)) {
@@ -333,8 +333,7 @@ export const addMaterial = (name, unit, minStock, color) => {
     name,
     stock: 0, // 初始库存为0
     unit,
-    minStock: parseFloat(minStock) || 0,
-    color: color || "cyan"
+    minStock: parseFloat(minStock) || 0
   };
 
   materials.push(newMat);
@@ -342,7 +341,7 @@ export const addMaterial = (name, unit, minStock, color) => {
   return { success: true, materials, products, logs };
 };
 
-export const updateMaterial = (id, name, unit, minStock, color) => {
+export const updateMaterial = (id, name, unit, minStock) => {
   try {
     const { materials, products, logs } = getStoredData();
     const matIndex = materials.findIndex(item => item.id === id);
@@ -359,7 +358,7 @@ export const updateMaterial = (id, name, unit, minStock, color) => {
     materials[matIndex].name = name;
     materials[matIndex].unit = unit;
     materials[matIndex].minStock = parseFloat(minStock) || 0;
-    if (color) materials[matIndex].color = color;
+    delete materials[matIndex].color;
 
     // 级联更新日志里的名称，以保持流水历史一致性
     if (oldName !== name && logs && logs.length > 0) {

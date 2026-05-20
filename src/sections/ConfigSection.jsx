@@ -1,5 +1,6 @@
 ﻿
 import Icons from "../components/Icons";
+import { getPaletteColor } from "../utils/palette";
 
 function formatNumber(value) {
   const number = Number(value || 0);
@@ -28,10 +29,12 @@ export default function ConfigSection({
           <button className="config-btn-add btn-pressable" onClick={() => setShowAddMaterialModal(true)}><Icons.Add />新增原材料</button>
         </div>
         <div className="config-item-list">
-          {[...materials].sort((a, b) => (a.archived ? 1 : 0) - (b.archived ? 1 : 0)).map((item) => (
+          {[...materials].sort((a, b) => (a.archived ? 1 : 0) - (b.archived ? 1 : 0)).map((item) => {
+            const color = getPaletteColor(item.id);
+            return (
             <div key={item.id} className={`config-card ${item.archived ? "archived" : ""}`}>
               <div className="config-info">
-                <span className="config-color-indicator" style={{ color: `var(--color-${item.color || "cyan"})` }} />
+                <span className="config-color-indicator" style={{ color: `var(--color-${color})` }} />
                 <div className="config-text">
                   <h4>
                     {item.name}
@@ -58,8 +61,7 @@ export default function ConfigSection({
                           id: item.id,
                           name: item.name,
                           unit: item.unit,
-                          minStock: String(item.minStock),
-                          color: item.color || "cyan"
+                          minStock: String(item.minStock)
                         });
                         setShowEditMaterialModal(true);
                       }}
@@ -71,7 +73,8 @@ export default function ConfigSection({
                 )}
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       </div>
 

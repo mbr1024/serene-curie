@@ -88,8 +88,8 @@ export default function App() {
   const [formMix, setFormMix] = useState({ notes: "" });
   const [mixConsumptions, setMixConsumptions] = useState({});
   const [formYield, setFormYield] = useState({ productId: "", qty: "", notes: "" });
-  const [formNewMaterial, setFormNewMaterial] = useState({ name: "", unit: "kg", minStock: "", color: "cyan" });
-  const [formEditMaterial, setFormEditMaterial] = useState({ id: "", name: "", unit: "kg", minStock: "", color: "cyan" });
+  const [formNewMaterial, setFormNewMaterial] = useState({ name: "", unit: "kg", minStock: "" });
+  const [formEditMaterial, setFormEditMaterial] = useState({ id: "", name: "", unit: "kg", minStock: "" });
   const [formNewProduct, setFormNewProduct] = useState({ name: "", unit: "双" });
   const [formEditProduct, setFormEditProduct] = useState({ id: "", name: "", unit: "双" });
 
@@ -406,13 +406,12 @@ export default function App() {
     const result = addMaterial(
       formNewMaterial.name.trim(),
       formNewMaterial.unit,
-      formNewMaterial.minStock,
-      formNewMaterial.color
+      formNewMaterial.minStock
     );
     if (result.success) {
       setMaterials(result.materials);
       setShowAddMaterialModal(false);
-      setFormNewMaterial({ name: "", unit: "kg", minStock: "", color: "cyan" });
+      setFormNewMaterial({ name: "", unit: "kg", minStock: "" });
       showToast("新原材料添加成功！");
     } else {
       showToast(result.message, "error");
@@ -429,8 +428,7 @@ export default function App() {
       formEditMaterial.id,
       formEditMaterial.name.trim(),
       formEditMaterial.unit,
-      formEditMaterial.minStock,
-      formEditMaterial.color
+      formEditMaterial.minStock
     );
     if (result.success) {
       setMaterials(result.materials);

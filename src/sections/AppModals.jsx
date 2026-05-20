@@ -2,7 +2,6 @@
 import Icons from "../components/Icons";
 
 const UNIT_OPTIONS = ["kg", "双", "卷", "桶", "米"];
-const COLOR_OPTIONS = ["cyan", "green", "orange", "gold", "red"];
 
 function activeMaterials(materials) {
   return materials.filter((item) => !item.archived);
@@ -263,12 +262,6 @@ export default function AppModals(props) {
                 <label>预警水位</label>
                 <input type="number" step="0.01" className="modal-input" value={formNewMaterial.minStock} onChange={(e) => setFormNewMaterial({ ...formNewMaterial, minStock: e.target.value })} required />
               </div>
-              <div className="modal-group" style={{ marginBottom: 0 }}>
-                <label>颜色标签</label>
-                <select className="modal-input" value={formNewMaterial.color} onChange={(e) => setFormNewMaterial({ ...formNewMaterial, color: e.target.value })}>
-                  {COLOR_OPTIONS.map((item) => <option key={item} value={item}>{item}</option>)}
-                </select>
-              </div>
             </div>
             <div className="modal-footer">
               <button type="button" className="modal-btn-cancel" onClick={() => setShowAddMaterialModal(false)}>取消</button>
@@ -299,12 +292,6 @@ export default function AppModals(props) {
               <div className="modal-group">
                 <label>预警水位</label>
                 <input type="number" step="0.01" className="modal-input" value={formEditMaterial.minStock} onChange={(e) => setFormEditMaterial({ ...formEditMaterial, minStock: e.target.value })} required />
-              </div>
-              <div className="modal-group" style={{ marginBottom: 0 }}>
-                <label>颜色标签</label>
-                <select className="modal-input" value={formEditMaterial.color} onChange={(e) => setFormEditMaterial({ ...formEditMaterial, color: e.target.value })}>
-                  {COLOR_OPTIONS.map((item) => <option key={item} value={item}>{item}</option>)}
-                </select>
               </div>
             </div>
             <div className="modal-footer">

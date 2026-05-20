@@ -1,5 +1,6 @@
 ﻿import DateRangePicker from "../components/DateRangePicker";
 import Icons from "../components/Icons";
+import { getPaletteColor } from "../utils/palette";
 
 function formatNumber(value) {
   const number = Number(value || 0);
@@ -45,15 +46,16 @@ export default function StockSection({
             const isUrgent = (item.daysRemaining !== null && item.daysRemaining < 3) || isLow;
             const isNormal = !isUrgent && item.daysRemaining !== null && item.daysRemaining >= 3;
             const batteryPercent = getBatteryPercent(item.stock, item.minStock);
+            const color = getPaletteColor(item.id);
 
             return (
-              <div key={item.id} className={`stock-card glow-${item.color} ${isUrgent && !item.archived ? "low-stock-alert" : ""} ${item.archived ? "archived-card" : ""}`}>
+              <div key={item.id} className={`stock-card glow-${color} ${isUrgent && !item.archived ? "low-stock-alert" : ""} ${item.archived ? "archived-card" : ""}`}>
                 <div className="card-header-info">
                   <span className="card-title">
                     {item.name}
                     {item.archived && <span className="archive-tag">已停用</span>}
                   </span>
-                  <span className={`card-badge ${item.archived ? "cyan" : isUrgent ? "red" : item.color}`}>
+                  <span className={`card-badge ${item.archived ? "cyan" : isUrgent ? "red" : color}`}>
                     {item.archived ? "存量清理" : isUrgent ? "低库存" : "正常"}
                   </span>
                 </div>
@@ -65,7 +67,7 @@ export default function StockSection({
 
                 <div>
                   <div className="battery-slot">
-                    <div className={`battery-fill ${item.archived ? "cyan" : isUrgent ? "red" : item.color}`} style={{ width: `${batteryPercent}%` }} />
+                    <div className={`battery-fill ${item.archived ? "cyan" : isUrgent ? "red" : color}`} style={{ width: `${batteryPercent}%` }} />
                   </div>
                   <div className="card-footer-stock">
                     <span>预警水位: {formatNumber(item.minStock)} {item.unit}</span>
