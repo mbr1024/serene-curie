@@ -550,7 +550,7 @@ export const restoreBackup = (backupJsonStr) => {
     }
     saveData(data.materials, data.products, data.logs);
     return { success: true, ...data };
-  } catch (e) {
+  } catch {
     return { success: false, message: "无法解析备份数据，请检查文件" };
   }
 };
