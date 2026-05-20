@@ -5,7 +5,8 @@ import {
   restockMaterial,
   batchRestockMaterials,
   shipProduct,
-  registerProductionBatch,
+  registerMixBatch,
+  registerYieldBatch,
   undoLog,
   addMaterial,
   updateMaterial,
@@ -126,7 +127,8 @@ export default function App() {
   // ----------------------------------------------------
   const [showRestockModal, setShowRestockModal] = useState(false);
   const [showShipmentModal, setShowShipmentModal] = useState(false);
-  const [showProductionModal, setShowProductionModal] = useState(false);
+  const [showMixModal, setShowMixModal] = useState(false);
+  const [showYieldModal, setShowYieldModal] = useState(false);
   const [showAddMaterialModal, setShowAddMaterialModal] = useState(false);
   const [showEditMaterialModal, setShowEditMaterialModal] = useState(false);
   const [showAddProductModal, setShowAddProductModal] = useState(false);
@@ -162,8 +164,9 @@ export default function App() {
   // ----------------------------------------------------
   const [formRestock, setFormRestock] = useState({ items: [], notes: "" });
   const [formShipment, setFormShipment] = useState({ productId: "", qty: "", notes: "" });
-  const [formProduction, setFormProduction] = useState({ productId: "", qty: "", notes: "" });
-  const [prodConsumptions, setProdConsumptions] = useState({}); // { [materialId]: qtyString }
+  const [formMix, setFormMix] = useState({ notes: "" });
+  const [mixConsumptions, setMixConsumptions] = useState({}); // { [materialId]: qtyString }
+  const [formYield, setFormYield] = useState({ productId: "", qty: "", notes: "" });
   
   const [formNewMaterial, setFormNewMaterial] = useState({ name: "", unit: "kg", minStock: "", color: "cyan" });
   const [formEditMaterial, setFormEditMaterial] = useState({ id: "", name: "", unit: "kg", minStock: "", color: "cyan" });
@@ -255,11 +258,11 @@ export default function App() {
     return 7;
   }, [statsTimeRange, customStartDate, customEndDate]);
 
-  // 1. 各原料的累计消耗总量 (用于柱状图) - 过滤当前统计周期
+  // 1. 各原料的累计消耗总量 (用于柱状图) - 过滤当前统计周期 (打料消耗)
   const materialConsumptionMap = useMemo(() => {
     const map = {};
     logs.forEach((log) => {
-      if (log.type === "production" && isLogInSelectedRange(log)) {
+      if (log.type === "mix" && isLogInSelectedRange(log)) {
         if (Array.isArray(log.consumptions)) {
           log.consumptions.forEach((c) => {
             if (c.name && c.qty) {
@@ -272,33 +275,26 @@ export default function App() {
     return map;
   }, [logs, isLogInSelectedRange]);
 
-  // 2. 各产品的累计产量及原料消耗占比网格数据 - 过滤当前统计周期
+  // 2. 各产品的累计产量数据 - 过滤当前统计周期 (完工产量)
   const productConsumptionStats = useMemo(() => {
-    const stats = {}; // productName -> { totalQty: 0, consumptions: {} }
+    const stats = {}; // productName -> { totalQty: 0 }
     logs.forEach((log) => {
-      if (log.type === "production" && isLogInSelectedRange(log)) {
+      if (log.type === "yield" && isLogInSelectedRange(log)) {
         const pName = log.itemName;
         if (!stats[pName]) {
-          stats[pName] = { totalQty: 0, consumptions: {} };
+          stats[pName] = { totalQty: 0 };
         }
         stats[pName].totalQty += parseFloat(log.qty || 0);
-        if (Array.isArray(log.consumptions)) {
-          log.consumptions.forEach((c) => {
-            if (c.name && c.qty) {
-              stats[pName].consumptions[c.name] = (stats[pName].consumptions[c.name] || 0) + parseFloat(c.qty);
-            }
-          });
-        }
       }
     });
     return stats;
   }, [logs, isLogInSelectedRange]);
 
-  // 3. 当前周期原料的实际总消耗量 (用于安全天数估算)
+  // 3. 当前周期原料的实际总消耗量 (用于安全天数估算) (打料消耗)
   const activePeriodCons = useMemo(() => {
     const map = {};
     logs.forEach((log) => {
-      if (log.type === "production" && Array.isArray(log.consumptions) && isLogInSelectedRange(log)) {
+      if (log.type === "mix" && Array.isArray(log.consumptions) && isLogInSelectedRange(log)) {
         log.consumptions.forEach((c) => {
           if (c.name && c.qty) {
             map[c.name] = (map[c.name] || 0) + parseFloat(c.qty);
@@ -385,63 +381,82 @@ export default function App() {
     }
   };
 
-  // 3. 生产批次实际扣减提交 (核心)
-  const handleProductionSubmit = (e) => {
+  // 3. 打料扣减实际记账提交 (只扣原料库)
+  const handleMixSubmit = (e) => {
     e.preventDefault();
-    if (!formProduction.productId || !formProduction.qty || parseFloat(formProduction.qty) <= 0) {
-      showToast("请填写正确的合格产出数量", "error");
-      return;
-    }
 
     // 格式化实际消耗格式
-    const consumptionsArray = Object.keys(prodConsumptions).map((matId) => ({
+    const consumptionsArray = Object.keys(mixConsumptions).map((matId) => ({
       materialId: matId,
-      qty: prodConsumptions[matId]
+      qty: mixConsumptions[matId]
     }));
 
     // 校验至少输入了一项原料消耗，防止偷懒
     const hasCons = consumptionsArray.some((item) => item.qty && parseFloat(item.qty) > 0);
     if (!hasCons) {
-      showToast("请至少填写一项实际原料消耗量！", "error");
+      showToast("请至少填写一项实际打料消耗量！", "error");
       return;
     }
 
-    const res = registerProductionBatch(
-      formProduction.productId,
-      formProduction.qty,
+    const res = registerMixBatch(
       consumptionsArray,
       "管理员",
-      formProduction.notes
+      formMix.notes
     );
 
     if (res.success) {
-      setProducts(res.products);
       setMaterials(res.materials);
       setLogs(res.logs);
-      setShowProductionModal(false);
-      setFormProduction({ productId: "", qty: "", notes: "" });
-      setProdConsumptions({});
-      showToast("生产批次实际记账成功！");
+      setShowMixModal(false);
+      setFormMix({ notes: "" });
+      setMixConsumptions({});
+      showToast("打料消耗实际记账成功！");
     } else {
       showToast(res.message, "error");
     }
   };
 
-  // 3.1 沿用上一批次生产原料实际投料量 (确保高度机密，零配方库泄露)
-  const handleReuseLastProductionCons = () => {
-    const lastProdLog = logs.find((log) => log.type === "production");
-    if (!lastProdLog) {
-      showToast("未找到历史排产记账流水，请先手动进行第一次登记！", "error");
+  // 3.5 完工产出实际记账提交 (只增成品库)
+  const handleYieldSubmit = (e) => {
+    e.preventDefault();
+    if (!formYield.productId || !formYield.qty || parseFloat(formYield.qty) <= 0) {
+      showToast("请填写正确的完工合格数量", "error");
+      return;
+    }
+
+    const res = registerYieldBatch(
+      formYield.productId,
+      formYield.qty,
+      "管理员",
+      formYield.notes
+    );
+
+    if (res.success) {
+      setProducts(res.products);
+      setLogs(res.logs);
+      setShowYieldModal(false);
+      setFormYield({ productId: "", qty: "", notes: "" });
+      showToast("完工产出实际记账成功！");
+    } else {
+      showToast(res.message, "error");
+    }
+  };
+
+  // 3.6 沿用上一批次打料原料实际投料量 (确保高度机密，零配方库泄露)
+  const handleReuseLastMixCons = () => {
+    const lastMixLog = logs.find((log) => log.type === "mix" || log.type === "production");
+    if (!lastMixLog) {
+      showToast("未找到历史打料或排产流水，请先手动进行第一次登记！", "error");
       return;
     }
     
-    if (!lastProdLog.consumptions || lastProdLog.consumptions.length === 0) {
-      showToast("上一批次生产记录中无原料消耗数据", "error");
+    if (!lastMixLog.consumptions || lastMixLog.consumptions.length === 0) {
+      showToast("上一批次记录中无原料消耗数据", "error");
       return;
     }
 
     const newConsumptions = {};
-    lastProdLog.consumptions.forEach((c) => {
+    lastMixLog.consumptions.forEach((c) => {
       // 动态根据原料名匹配 id
       const mat = materials.find((m) => m.name === c.name);
       if (mat) {
@@ -449,8 +464,8 @@ export default function App() {
       }
     });
 
-    setProdConsumptions(newConsumptions);
-    showToast("已成功复制并沿用上一批次实际消耗投料！");
+    setMixConsumptions(newConsumptions);
+    showToast("已成功复制并沿用上一批次打料消耗投料！");
   };
 
   // 3.2 键盘快捷流网格输入导航 (Enter / Down / Up)
@@ -1065,13 +1080,24 @@ export default function App() {
             <div className="analytics-kpi-grid">
               <div className="kpi-card btn-pressable">
                 <div className="kpi-header">
-                  <span className="kpi-icon">🏭</span>
-                  <span className="kpi-title">最近统计生产批次</span>
+                  <span className="kpi-icon">🥣</span>
+                  <span className="kpi-title">打料炼胶累计批次</span>
                 </div>
                 <div className="kpi-value">
-                  {logs.filter(log => log.type === "production" && isLogInSelectedRange(log)).length} <span className="kpi-unit">次</span>
+                  {logs.filter(log => (log.type === "mix" || log.type === "production") && isLogInSelectedRange(log)).length} <span className="kpi-unit">次</span>
                 </div>
-                <div className="kpi-footer">当前周期：{statsTimeRange === "7" ? "最近一周" : statsTimeRange === "15" ? "最近半个月" : statsTimeRange === "30" ? "最近一个月" : `${customStartDate} 至 ${customEndDate}`}</div>
+                <div className="kpi-footer">当前统计周期内的实际打料次数</div>
+              </div>
+
+              <div className="kpi-card btn-pressable">
+                <div className="kpi-header">
+                  <span className="kpi-icon">🏭</span>
+                  <span className="kpi-title">完工生产累计批次</span>
+                </div>
+                <div className="kpi-value">
+                  {logs.filter(log => (log.type === "yield" || log.type === "production") && isLogInSelectedRange(log)).length} <span className="kpi-unit">次</span>
+                </div>
+                <div className="kpi-footer">当前统计周期内的实际报产次数</div>
               </div>
 
               <div className="kpi-card btn-pressable">
@@ -1080,9 +1106,9 @@ export default function App() {
                   <span className="kpi-title">最近统计产出成品</span>
                 </div>
                 <div className="kpi-value">
-                  {logs.filter(log => log.type === "production" && isLogInSelectedRange(log)).reduce((acc, log) => acc + parseFloat(log.qty || 0), 0)} <span className="kpi-unit">件</span>
+                  {logs.filter(log => (log.type === "yield" || log.type === "production") && isLogInSelectedRange(log)).reduce((acc, log) => acc + parseFloat(log.qty || 0), 0)} <span className="kpi-unit">双</span>
                 </div>
-                <div className="kpi-footer">当前周期：{statsTimeRange === "7" ? "最近一周" : statsTimeRange === "15" ? "最近半个月" : statsTimeRange === "30" ? "最近一个月" : `${customStartDate} 至 ${customEndDate}`}</div>
+                <div className="kpi-footer">基于完工与生产流水的成品双数</div>
               </div>
 
               <div className="kpi-card btn-pressable">
@@ -1091,51 +1117,32 @@ export default function App() {
                   <span className="kpi-title">最近统计出货总量</span>
                 </div>
                 <div className="kpi-value">
-                  {logs.filter(log => log.type === "shipment" && isLogInSelectedRange(log)).reduce((acc, log) => acc + parseFloat(log.qty || 0), 0)} <span className="kpi-unit">件</span>
+                  {logs.filter(log => log.type === "shipment" && isLogInSelectedRange(log)).reduce((acc, log) => acc + parseFloat(log.qty || 0), 0)} <span className="kpi-unit">双</span>
                 </div>
                 <div className="kpi-footer">基于选定周期的产品出库总量</div>
               </div>
             </div>
 
             <div className="analytics-main-grid analytics-single-col">
-              {/* 产品投产消耗明细（全宽） */}
+              {/* 产品完工产量明细（全宽） */}
               <div className="analytics-chart-panel">
                 <div className="panel-header">
-                  <h3>🎯 各大底款式投产消耗明细</h3>
-                  <span className="panel-sub">各大底款式产出量及关联原料消耗量与单双平均耗量</span>
+                  <h3>🎯 各大底款式累计产量明细</h3>
+                  <span className="panel-sub">选定统计周期内各大底款式的累计完工产量</span>
                 </div>
                 <div className="ratio-list">
                   {Object.keys(productConsumptionStats).length === 0 ? (
-                    <div className="empty-placeholder" style={{ padding: "40px" }}>暂无大底款式投产消耗流水</div>
+                    <div className="empty-placeholder" style={{ padding: "40px" }}>暂无大底完工产出流水</div>
                   ) : (
                     Object.keys(productConsumptionStats).map((prodName) => {
                       const stats = productConsumptionStats[prodName];
-                      const matEntries = Object.keys(stats.consumptions);
                       return (
-                        <div key={prodName} className="ratio-card">
-                          <div className="ratio-card-header">
-                            <h4>👟 {prodName}</h4>
-                            <span className="total-produced">累计产出: <strong>{stats.totalQty}</strong> 件</span>
-                          </div>
-                          <div className="ratio-card-body">
-                            <h5>物料消耗明细:</h5>
-                            <div className="ratio-grid">
-                              {matEntries.map((matName) => {
-                                const consumedQty = stats.consumptions[matName];
-                                const perUnit = stats.totalQty > 0 ? (consumedQty / stats.totalQty).toFixed(2) : "—";
-                                const mat = materials.find(m => m.name === matName);
-                                const unit = mat ? mat.unit : "";
-                                return (
-                                  <div key={matName} className="ratio-item">
-                                    <div className="ratio-mat-name">{matName}</div>
-                                    <div className="ratio-vals">
-                                      <span>共 {consumedQty.toFixed(1)} {unit}</span>
-                                      <span className="ratio-badge">{perUnit} {unit} / 件</span>
-                                    </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
+                        <div key={prodName} className="ratio-card" style={{ padding: "16px 20px" }}>
+                          <div className="ratio-card-header" style={{ borderBottom: "none", paddingBottom: 0, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <h4 style={{ margin: 0, fontSize: "16px", fontWeight: "600" }}>👟 {prodName}</h4>
+                            <span className="total-produced" style={{ fontSize: "14px" }}>
+                              累计产量: <strong style={{ color: "var(--color-cyan)", fontSize: "18px", marginLeft: "4px" }}>{stats.totalQty}</strong> 双
+                            </span>
                           </div>
                         </div>
                       );
@@ -1186,25 +1193,42 @@ export default function App() {
           </div>
 
           <div className="action-cards-grid">
-            {/* 1. 生产登记 */}
+            {/* 1. 打料登记 */}
             <div className="action-big-card action-production btn-pressable" onClick={() => {
-              const activeProds = products.filter(p => !p.archived);
               const activeMats = materials.filter(m => !m.archived);
-              if (activeProds.length === 0) {
-                showToast("没有可用的活跃产品，请先到配置页启用或添加！", "error");
-              } else if (activeMats.length === 0) {
+              if (activeMats.length === 0) {
                 showToast("没有可用的活跃原材料，请先到配置页启用或添加！", "error");
               } else {
-                setFormProduction({ productId: activeProds[0].id, qty: "", notes: "" });
-                setShowProductionModal(true);
+                setFormMix({ notes: "" });
+                setMixConsumptions({});
+                setShowMixModal(true);
+              }
+            }}>
+              <div className="action-icon">
+                <span style={{ fontSize: "36px" }}>🥣</span>
+              </div>
+              <span className="action-name">打料记账 (原料消耗)</span>
+              <span className="action-desc">
+                登记混炼打料实际消耗的基础原料总量（如天然橡胶、炭黑、促进剂等），精确扣减原料库。
+              </span>
+            </div>
+
+            {/* 1.5 完工登记 */}
+            <div className="action-big-card action-production btn-pressable" style={{ borderLeft: "4px solid var(--color-cyan)" }} onClick={() => {
+              const activeProds = products.filter(p => !p.archived);
+              if (activeProds.length === 0) {
+                showToast("没有可用的活跃产品，请先到配置页启用或添加！", "error");
+              } else {
+                setFormYield({ productId: activeProds[0].id, qty: "", notes: "" });
+                setShowYieldModal(true);
               }
             }}>
               <div className="action-icon">
                 <Icons.Factory />
               </div>
-              <span className="action-name">生产登记 (产出+消耗)</span>
+              <span className="action-name">完工记账 (大底产量)</span>
               <span className="action-desc">
-                记录今日某批次实际产出的合格品数量，并同时输入该批次实际消耗的所有原材料，损耗与不良率一键计入。
+                登记硫化压制出炉的各款式合格大底双数，直接入库增加成品大底的物理库存。
               </span>
             </div>
 
@@ -1475,6 +1499,8 @@ export default function App() {
                     <div className={`ledger-icon-badge ${log.type}`}>
                       {log.type === "restock" && "📥"}
                       {log.type === "shipment" && "📤"}
+                      {log.type === "mix" && "🥣"}
+                      {log.type === "yield" && "🏭"}
                       {log.type === "production" && "🏭"}
                     </div>
                     <div className="ledger-body">
@@ -1491,6 +1517,30 @@ export default function App() {
                       {log.type === "shipment" && (
                         <div className="ledger-summary">
                           出货发运产品 <em>{log.itemName}</em> 共计 <strong>-{log.qty}</strong>
+                        </div>
+                      )}
+
+                      {log.type === "mix" && (
+                        <div>
+                          <div className="ledger-summary">
+                            生产打料实际消耗原料如下：
+                          </div>
+                          {log.consumptions && log.consumptions.length > 0 && (
+                            <div className="ledger-consumptions">
+                              <span>实际原料消耗: </span>
+                              {log.consumptions.map((cons, index) => (
+                                <span key={index} className="consumption-pill" style={{ color: "var(--color-danger)", borderColor: "rgba(255, 46, 46, 0.2)" }}>
+                                  {cons.name}: -{cons.qty} 公斤
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {log.type === "yield" && (
+                        <div className="ledger-summary">
+                          完工报产大底 <em>{log.itemName}</em> 共计 <strong>+{log.qty}</strong> 双
                         </div>
                       )}
 
@@ -1684,150 +1734,191 @@ export default function App() {
       {/* ====================================================
          弹出层: 3. 核心生产登记双栏弹窗 (无配方，左栏产出，右栏实际消耗)
          ==================================================== */}
-      {showProductionModal && (
+      {/* ====================================================
+         弹出层: 3. 生产打料记账弹窗 (仅打料，只扣原料)
+         ==================================================== */}
+      {showMixModal && (
         <div className="modal-overlay">
-          <form className="modal-content wide" onSubmit={handleProductionSubmit}>
+          <form className="modal-content" onSubmit={handleMixSubmit}>
             <div className="modal-header">
-              <h3>🏭 本批次生产合格品记账 (损耗天然记入)</h3>
-              <button type="button" className="modal-btn-close" onClick={() => setShowProductionModal(false)}>
+              <h3>🥣 生产打料消耗登记 (混炼实际记账)</h3>
+              <button type="button" className="modal-btn-close" onClick={() => setShowMixModal(false)}>
                 ✕
               </button>
             </div>
 
-            <div className="modal-body production-double-column">
-              {/* 左半边: 生产产品和数量 */}
-              <div className="prod-left-column">
-                <div className="modal-group">
-                  <label>产出成品类别:</label>
-                  <select
-                    className="modal-input"
-                    value={formProduction.productId}
-                    onChange={(e) => setFormProduction({ ...formProduction, productId: e.target.value })}
+            <div className="modal-body">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                <span style={{ fontWeight: 700, fontSize: "14px", color: "var(--text-secondary)" }}>🥣 本批打料实际消耗原料量:</span>
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    type="button"
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      background: "rgba(0, 242, 254, 0.15)",
+                      border: "1px solid rgba(0, 242, 254, 0.3)",
+                      color: "var(--color-cyan)",
+                      boxShadow: "0 0 8px rgba(0, 242, 254, 0.1)",
+                      transition: "all 0.2s ease"
+                    }}
+                    onClick={handleReuseLastMixCons}
                   >
-                    {products.filter(p => !p.archived).map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="modal-group">
-                  <label>实际合格产出数量:</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    className="modal-input"
-                    placeholder="合格品的产出总量"
-                    value={formProduction.qty}
-                    onChange={(e) => setFormProduction({ ...formProduction, qty: e.target.value })}
-                    required
-                    onInvalid={(e) => e.target.setCustomValidity("请填写实际合格产出数量")}
-                    onInput={(e) => e.target.setCustomValidity("")}
-                  />
-                </div>
-
-                <div className="modal-group" style={{ marginBottom: 0 }}>
-                  <label>生产批次备注 (选填):</label>
-                  <textarea
-                    className="modal-input"
-                    style={{ minHeight: "100px", resize: "none" }}
-                    placeholder="如: 批次号、某生产线、领班签字、异常备忘等"
-                    value={formProduction.notes}
-                    onChange={(e) => setFormProduction({ ...formProduction, notes: e.target.value })}
-                  />
+                    📋 沿用上批打料配方
+                  </button>
+                  <button
+                    type="button"
+                    style={{
+                      padding: "6px 12px",
+                      fontSize: "12px",
+                      fontWeight: "bold",
+                      borderRadius: "8px",
+                      cursor: "pointer",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      color: "var(--text-secondary)",
+                      transition: "all 0.2s ease"
+                    }}
+                    onClick={() => {
+                      setMixConsumptions({});
+                      showToast("已清空当前录入的消耗量");
+                    }}
+                  >
+                    🗑️ 清空
+                  </button>
                 </div>
               </div>
 
-              {/* 右半边: 本次生产的实际物料消耗表单 */}
-              <div className="prod-right-column">
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
-                  <span style={{ fontWeight: 700, fontSize: "13px", color: "var(--text-secondary)" }}>⚡ 本批次原料实际消耗量:</span>
-                  <div style={{ display: "flex", gap: "8px" }}>
-                    <button
-                      type="button"
-                      style={{
-                        padding: "4px 10px",
-                        fontSize: "11px",
-                        fontWeight: "bold",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        background: "rgba(0, 242, 254, 0.15)",
-                        border: "1px solid rgba(0, 242, 254, 0.3)",
-                        color: "var(--color-cyan)",
-                        boxShadow: "0 0 8px rgba(0, 242, 254, 0.1)",
-                        transition: "all 0.2s ease"
-                      }}
-                      onClick={handleReuseLastProductionCons}
-                    >
-                      📋 沿用上一批次
-                    </button>
-                    <button
-                      type="button"
-                      style={{
-                        padding: "4px 10px",
-                        fontSize: "11px",
-                        fontWeight: "bold",
-                        borderRadius: "8px",
-                        cursor: "pointer",
-                        background: "rgba(255, 255, 255, 0.05)",
-                        border: "1px solid rgba(255, 255, 255, 0.1)",
-                        color: "var(--text-secondary)",
-                        transition: "all 0.2s ease"
-                      }}
-                      onClick={() => {
-                        setProdConsumptions({});
-                        showToast("已清空当前录入的消耗量");
-                      }}
-                    >
-                      🗑️ 清空
-                    </button>
-                  </div>
-                </div>
-
-                <div className="consumptions-checklist" style={{ maxHeight: "320px", overflowY: "auto", paddingRight: "6px" }}>
-                  {(() => {
-                    const activeMats = materials.filter(m => !m.archived);
-                    if (activeMats.length === 0) {
-                      return <div className="empty-placeholder" style={{ padding: "20px 0", fontSize: "12px" }}>请先前往配置添加原材料</div>;
-                    }
-                    return activeMats.map((m, index) => (
-                      <div key={m.id} className="checklist-row">
-                        <div className="checklist-label">
-                          <span className="config-color-indicator" style={{ color: `var(--color-${m.color})` }} />
-                          {m.name}
-                        </div>
-                        <div className="checklist-input-wrapper">
-                          <input
-                            type="number"
-                            step="0.01"
-                            className="checklist-input"
-                            placeholder="0.00"
-                            data-mat-index={index}
-                            value={prodConsumptions[m.id] || ""}
-                            onChange={(e) =>
-                              setProdConsumptions({
-                                ...prodConsumptions,
-                                [m.id]: e.target.value
-                              })
-                            }
-                            onKeyDown={(e) => handleConsKeyNavigation(e, index, activeMats.length)}
-                          />
-                          <span className="checklist-unit">{m.unit}</span>
-                        </div>
+              <div className="consumptions-checklist" style={{ maxHeight: "320px", overflowY: "auto", paddingRight: "6px", marginBottom: "20px" }}>
+                {(() => {
+                  const activeMats = materials.filter(m => !m.archived);
+                  if (activeMats.length === 0) {
+                    return <div className="empty-placeholder" style={{ padding: "20px 0", fontSize: "12px" }}>请先前往配置添加原材料</div>;
+                  }
+                  return activeMats.map((m, index) => (
+                    <div key={m.id} className="checklist-row">
+                      <div className="checklist-label">
+                        <span className="config-color-indicator" style={{ color: `var(--color-${m.color})` }} />
+                        {m.name}
                       </div>
-                    ));
-                  })()}
-                </div>
+                      <div className="checklist-input-wrapper">
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="checklist-input"
+                          placeholder="0.00"
+                          data-mat-index={index}
+                          value={mixConsumptions[m.id] || ""}
+                          onChange={(e) =>
+                            setMixConsumptions({
+                              ...mixConsumptions,
+                              [m.id]: e.target.value
+                            })
+                          }
+                          onKeyDown={(e) => handleConsKeyNavigation(e, index, activeMats.length)}
+                        />
+                        <span className="checklist-unit">{m.unit}</span>
+                      </div>
+                    </div>
+                  ));
+                })()}
+              </div>
+
+              <div className="modal-group" style={{ marginBottom: 0 }}>
+                <label>打料批次备注 (选填):</label>
+                <textarea
+                  className="modal-input"
+                  style={{ minHeight: "80px", resize: "none" }}
+                  placeholder="如: 批次配方名称、操作班组、炼胶机号或异常说明等"
+                  value={formMix.notes}
+                  onChange={(e) => setFormMix({ ...formMix, notes: e.target.value })}
+                />
               </div>
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="modal-btn-cancel" onClick={() => setShowProductionModal(false)}>
+              <button type="button" className="modal-btn-cancel" onClick={() => setShowMixModal(false)}>
                 取消
               </button>
               <button type="submit" className="modal-btn-submit">
-                确认排产记账
+                确认打料扣料
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* ====================================================
+         弹出层: 4. 完工报产大底弹窗 (仅产出，只增成品)
+         ==================================================== */}
+      {showYieldModal && (
+        <div className="modal-overlay">
+          <form className="modal-content" onSubmit={handleYieldSubmit}>
+            <div className="modal-header">
+              <h3>📦 完工报产实际记账 (增加大底产量)</h3>
+              <button type="button" className="modal-btn-close" onClick={() => setShowYieldModal(false)}>
+                ✕
+              </button>
+            </div>
+
+            <div className="modal-body">
+              <div className="modal-group">
+                <label>产出成品大底款式:</label>
+                {products.filter(p => !p.archived).length === 0 ? (
+                  <div style={{ color: "var(--color-danger)", fontSize: "13px", fontWeight: "bold" }}>
+                    ⚠️ 当前无可用的产品款式，请先前往“款式定义”板块添加！
+                  </div>
+                ) : (
+                  <select
+                    className="modal-input"
+                    value={formYield.productId}
+                    onChange={(e) => setFormYield({ ...formYield, productId: e.target.value })}
+                  >
+                    {products.filter(p => !p.archived).map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.name} (当前库存: {p.stock} {p.unit})
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div className="modal-group">
+                <label>合格完工产量 (双):</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="modal-input"
+                  placeholder="请输入实际合格入库大底双数"
+                  value={formYield.qty}
+                  onChange={(e) => setFormYield({ ...formYield, qty: e.target.value })}
+                  required
+                  onInvalid={(e) => e.target.setCustomValidity("请填写合格完工产量")}
+                  onInput={(e) => e.target.setCustomValidity("")}
+                />
+              </div>
+
+              <div className="modal-group" style={{ marginBottom: 0 }}>
+                <label>生产完工备注 (选填):</label>
+                <textarea
+                  className="modal-input"
+                  style={{ minHeight: "80px", resize: "none" }}
+                  placeholder="如: 生产线别、成型班组、成型操作工等说明"
+                  value={formYield.notes}
+                  onChange={(e) => setFormYield({ ...formYield, notes: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="modal-btn-cancel" onClick={() => setShowYieldModal(false)}>
+                取消
+              </button>
+              <button type="submit" className="modal-btn-submit">
+                确认完工报产
               </button>
             </div>
           </form>

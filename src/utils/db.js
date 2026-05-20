@@ -60,10 +60,6 @@ const saveData = (materials, products, logs) => {
   localStorage.setItem(KEYS.LOGS, JSON.stringify(logs));
 };
 
-// ----------------------------------------------------
-// 核心业务处理 CRUD & 流水联动
-// ----------------------------------------------------
-
 // 浮点数保留两位小数的安全四舍五入算法，防止 JavaScript 浮点数累积误差 (如 0.1+0.2=0.30000000000000004)
 const roundToTwo = (num) => Math.round((num + Number.EPSILON) * 100) / 100;
 
@@ -174,19 +170,12 @@ export const shipProduct = (productId, qty, operator, notes) => {
 };
 
 /**
- * 3. 生产批次实际记录（产出 + 实际扣减原料）
+ * 3. 生产打料实际扣减记录 (只扣原料库)
  */
-export const registerProductionBatch = (productId, productQty, materialConsumptions, operator, notes) => {
+export const registerMixBatch = (materialConsumptions, operator, notes) => {
   const { materials, products, logs } = getStoredData();
-  
-  // 1. 查找产品，增肌库存
-  const prodIndex = products.findIndex(item => item.id === productId);
-  if (prodIndex === -1) return { success: false, message: "未找到该产品" };
-  
-  const parsedProdQty = parseFloat(productQty);
-  products[prodIndex].stock = roundToTwo(products[prodIndex].stock + parsedProdQty);
 
-  // 1.5 校验原材料库存，防止扣成负数
+  // 1. 校验原料库存是否充足
   for (const item of materialConsumptions) {
     if (item.qty && parseFloat(item.qty) > 0) {
       const matIndex = materials.findIndex(m => m.id === item.materialId);
@@ -196,16 +185,15 @@ export const registerProductionBatch = (productId, productQty, materialConsumpti
         if (currentStock < consumedQty) {
           return {
             success: false,
-            message: `原材料 [${materials[matIndex].name}] 库存不足！当前库存：${currentStock} 公斤，本次生产需消耗：${consumedQty} 公斤。请先前往记账录入原料入库！`
+            message: `原材料 [${materials[matIndex].name}] 库存不足！当前库存：${currentStock} 公斤，本次生产需消耗：${consumedQty} 公斤。请先录入原料入库！`
           };
         }
       }
     }
   }
 
-  // 2. 扣除原材料库存，并拼装日志
+  // 2. 扣除原材料库存，并拼装明细
   const consumptionDetails = [];
-  
   for (const item of materialConsumptions) {
     if (item.qty && parseFloat(item.qty) > 0) {
       const matIndex = materials.findIndex(m => m.id === item.materialId);
@@ -220,15 +208,43 @@ export const registerProductionBatch = (productId, productQty, materialConsumpti
     }
   }
 
-  // 3. 生成完整的批次流水
+  // 3. 生成打料流水
   const newLog = {
     id: "log_" + Date.now(),
-    type: "production",
+    type: "mix",
     date: new Date().toISOString().split("T")[0],
-    title: "生产批次",
+    title: "打料消耗",
+    itemName: "生产原材料",
+    consumptions: consumptionDetails,
+    operator: operator || "系统",
+    notes: notes || ""
+  };
+
+  logs.unshift(newLog);
+  saveData(materials, products, logs);
+  return { success: true, materials, products, logs };
+};
+
+/**
+ * 3.5 完工产出记录 (只增成品库)
+ */
+export const registerYieldBatch = (productId, productQty, operator, notes) => {
+  const { materials, products, logs } = getStoredData();
+
+  const prodIndex = products.findIndex(item => item.id === productId);
+  if (prodIndex === -1) return { success: false, message: "未找到该大底产品" };
+
+  const parsedProdQty = parseFloat(productQty);
+  products[prodIndex].stock = roundToTwo(products[prodIndex].stock + parsedProdQty);
+
+  // 生成完工产出流水
+  const newLog = {
+    id: "log_" + Date.now(),
+    type: "yield",
+    date: new Date().toISOString().split("T")[0],
+    title: "完工产出",
     itemName: products[prodIndex].name,
     qty: parsedProdQty,
-    consumptions: consumptionDetails,
     operator: operator || "系统",
     notes: notes || ""
   };
@@ -262,8 +278,24 @@ export const undoLog = (logId) => {
     if (prodIndex !== -1) {
       products[prodIndex].stock = roundToTwo(products[prodIndex].stock + log.qty);
     }
+  } else if (log.type === "mix") {
+    // 打料撤销：将扣掉的原材料原路退回！
+    if (log.consumptions && log.consumptions.length > 0) {
+      for (const cons of log.consumptions) {
+        const matIndex = materials.findIndex(m => m.name === cons.name);
+        if (matIndex !== -1) {
+          materials[matIndex].stock = roundToTwo(materials[matIndex].stock + cons.qty);
+        }
+      }
+    }
+  } else if (log.type === "yield") {
+    // 产出完工撤销：将增加的成品扣除！
+    const prodIndex = products.findIndex(p => p.name === log.itemName);
+    if (prodIndex !== -1) {
+      products[prodIndex].stock = roundToTwo(products[prodIndex].stock - log.qty);
+    }
   } else if (log.type === "production") {
-    // 生产撤销：扣除加进去的产品，同时返还扣掉的原料！
+    // 兼容历史生产批次撤销：扣除加进去的产品，同时返还扣掉的原料！
     const prodIndex = products.findIndex(p => p.name === log.itemName);
     if (prodIndex !== -1) {
       products[prodIndex].stock = roundToTwo(products[prodIndex].stock - log.qty);
@@ -342,6 +374,13 @@ export const updateMaterial = (id, name, unit, minStock, color) => {
             }
           });
         }
+        if (log.type === "mix" && log.consumptions) {
+          log.consumptions.forEach(cons => {
+            if (cons.name === oldName) {
+              cons.name = name;
+            }
+          });
+        }
       });
     }
 
@@ -363,6 +402,9 @@ export const deleteMaterial = (id) => {
     const isReferenced = logs?.some(log => {
       if (log?.type === "restock" && log?.itemName === material.name) return true;
       if (log?.type === "production" && log?.consumptions) {
+        return log.consumptions.some(cons => cons?.name === material.name);
+      }
+      if (log?.type === "mix" && log?.consumptions) {
         return log.consumptions.some(cons => cons?.name === material.name);
       }
       return false;
@@ -441,7 +483,7 @@ export const updateProduct = (id, name, unit, minStock) => {
     // 级联更新日志里的产品名，以保持流水历史一致性
     if (oldName !== name && logs && logs.length > 0) {
       logs.forEach(log => {
-        if ((log.type === "shipment" || log.type === "production") && log.itemName === oldName) {
+        if ((log.type === "shipment" || log.type === "production" || log.type === "yield") && log.itemName === oldName) {
           log.itemName = name;
         }
       });
@@ -463,7 +505,7 @@ export const deleteProduct = (id) => {
 
     // 级联拦截校验：扫描流水历史中是否引用了此产成品名称 (采用防空指针可选链)
     const isReferenced = logs?.some(log => {
-      if ((log?.type === "shipment" || log?.type === "production") && log?.itemName === product.name) return true;
+      if ((log?.type === "shipment" || log?.type === "production" || log?.type === "yield") && log?.itemName === product.name) return true;
       return false;
     });
 

@@ -330,9 +330,10 @@
 
 .action-cards-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(280px, 340px));
-  gap: 32px;
+  grid-template-columns: repeat(4, minmax(200px, 1fr));
+  gap: 24px;
   width: 100%;
+  max-width: 1300px;
   justify-content: center;
 }
 
@@ -341,7 +342,7 @@
   background: var(--bg-action-card);
   border: 1px solid var(--border-glow);
   border-radius: 28px;
-  padding: 48px 32px;
+  padding: 40px 20px;
   text-align: center;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -586,6 +587,8 @@
 .ledger-icon-badge.restock { background: var(--color-green-glow); color: var(--color-green); }
 .ledger-icon-badge.shipment { background: var(--color-orange-glow); color: var(--color-orange); }
 .ledger-icon-badge.production { background: var(--color-cyan-glow); color: var(--color-cyan); }
+.ledger-icon-badge.mix { background: var(--color-danger-glow); color: var(--color-danger); }
+.ledger-icon-badge.yield { background: var(--color-cyan-glow); color: var(--color-cyan); }
 
 .ledger-body h4 {
   font-size: 15px;
@@ -1072,7 +1075,7 @@
 /* 顶部 KPI 玻璃卡片网格 */
 .analytics-kpi-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(4, minmax(220px, 1fr));
   gap: 24px;
 }
 
